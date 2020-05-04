@@ -1,14 +1,19 @@
 {
-    "profiles": {
-        "Development": {
-            "commandName": "Project",
-            "launchBrowser": true,
-            "launchUrl": "api/healthcheck",
-            "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://localhost:9000/",
-                "PACT_PROVIDER_SHOULD_THROW_404": false
-            }
-        }
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+  },
+  "profiles": {
+    "test": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "api/healthcheck",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PACT_PROVIDER_SHOULD_THROW_404": false
+      }
     }
+  }
 }
