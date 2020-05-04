@@ -4,16 +4,16 @@ Before starting I wish to thanks the following github authors where I took part 
 * [Doctor500](https://github.com/doktor500/pact-workshop-consumer): for his ideas how to organise the repository for a training by steps
 * [tdshipley](https://github.com/tdshipley/pact-workshop-dotnet-core-v1): for having a full working solution on .Net core 2
 
-#Pre-Requirements
+# Pre-Requirements
 * Fork this github repository into your account (You will find a "fork" icon on the top right corner)
 * Clone the forked repository that exists in your github account into your local machine
 
-#Requirements
+# Requirements
 * .Net Core 3.1 is already installed on your system
 * Use what ever IDE you like
 
-#Step 1
-##Step 1.1 - Start the Provider API Locally
+# Step 1
+## Step 1.1 - Start the Provider API Locally
 Using the command line to navigate
 ```` 
 [RepositoryRoot]/Provider/src/
