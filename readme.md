@@ -1,67 +1,207 @@
-This project was created to present the reader how Pact.Net is used with .Net Core 3.1
+# Step 1: Consumer (Creating the first Contract)
 
-Before starting I wish to thanks the following github authors where I took part of their ideas to create this repository:
-* [Doctor500](https://github.com/doktor500/pact-workshop-consumer): for his ideas how to organise the repository for a training by steps
-* [tdshipley](https://github.com/tdshipley/pact-workshop-dotnet-core-v1): for having a full working solution on .Net core 2
+At this stage if we want to validate our Consumer is always working, we have 3 choices:
+1. Create an End to End test that involve the Consumer and the Provider
+2. Creating an Integration test for the API that Provider is exposing
+3. Implement a Contract test
 
-# Pre-Requirements
-* Fork this github repository into your account (You will find a "fork" icon on the top right corner)
-* Clone the forked repository that exists in your github account into your local machine
+Creating and E2E test is expensive since in a CD environment you will need to have instances of both microservices running in order to execute the test.
 
-# Requirements
-* .Net Core 3.1 is already installed on your system
-* Use what ever IDE you like
+Creating an Integration test for the API that Provider service is exposing is a good alternative but it has some drawbacks.
 
-# Step 1
-## Step 1.1 - Start the Provider API Locally
-Using the command line to navigate
+If the test is written in the provider side, if the API changes it is going to be difficult to make the consumer aware of the change
+If the test is written on the consumer side, you will need an instance of the provider (Provider Service) running in order to be able to execute the test
+We will explore Option 3, and we will implement a Contract test using [PactNet](https://github.com/pact-foundation/pact-net)
+
+For this first step, we move to the ```Consumer/tests``` folder and we launch the following on the command line:
+
+````
+> dotnet new xunit
+
+> dotnet add package PactNet.OSX
+> dotnet add package PactNet.Windows
+> dotnet add package PactNet.Linux.x64
+> dotnet restore
+Choose one of the above depends of your OS
+
+> cd ../../
+> dotnet sln add Consumer/tests
+````
+## Create the xUnit Fixture
+First we create a new xUnit Fixture class as follow:
+
+````csharp
+    public class ConsumerPactClassFixture : IDisposable
+    {
+        public IPactBuilder PactBuilder { get; private set; }
+        public IMockProviderService MockProviderService { get; private set; }
+
+        public int MockServerPort { get { return 9222; } }
+        public string MockProviderServiceBaseUri { get { return String.Format("http://localhost:{0}", MockServerPort); } }
+
+        public ConsumerPactClassFixture()
+        {
+            // Using Spec version 2.0.0 more details at https://goo.gl/UrBSRc
+            var pactConfig = new PactConfig
+            {
+                SpecificationVersion = "2.0.0",
+                PactDir = @"..\..\..\..\..\pacts",
+                LogDir = @".\pact_logs"
+            };
+
+            PactBuilder = new PactBuilder(pactConfig);
+
+            PactBuilder.ServiceConsumer("Consumer")
+                .HasPactWith("Provider");
+
+            MockProviderService = PactBuilder.MockService(MockServerPort);
+        }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // This will save the pact file once finished.
+                    PactBuilder.Build();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+        }
+        #endregion
+    }
 ```` 
-[RepositoryRoot]/Provider/src/
-```` 
-Once in the Provider */src/* directory first do a ```dotnet restore``` at the command line to pull down the dependencies required for the project.
-Once that has completed run ```dotnet run``` this will start your the Provider API. Now check that everything is working O.K. by navigating to
-the URL below in your browser:
+With this ConsumerPactClassFixture class, we are configuring Pact in the consumer.
 
-```
-http://localhost:9000/api/provider?validDateTime=05/01/2018
-```
+When a Pact test is run, Pact will intercept the HTTP requests happening against **localhost:9222** (based on this configuration) and it will return the predefined responses specified in the test. 
+Pact will create a contract based on the expectations declared in the tests and the contract will be used in the provider side for its verification.
 
-If your request is successful you should see in your browser:
+Create now a xUnit class tests ConsumerPactTests as follow:
 
-```
-{"test":"NO","validDateTime":"05-01-2018 00:00:00"}
-```
+````csharp
+public class ConsumerPactTests : IClassFixture<ConsumerPactClassFixture>
+    {
+        private IMockProviderService _mockProviderService;
+        private string _mockProviderServiceBaseUri;
 
-If you see the above leave the Provider API running then you are ready to try out the consumer.
+        public ConsumerPactTests(ConsumerPactClassFixture fixture)
+        {
+            _mockProviderService = fixture.MockProviderService;
+            _mockProviderService.ClearInteractions(); //NOTE: Clears any previously registered interactions before the test is run
+            _mockProviderServiceBaseUri = fixture.MockProviderServiceBaseUri;
+        }
 
-### Step 1.2 - Execute the Consumer
+        [Fact]
+        public void ItParsesADateCorrectly()
+        {
+            var expectedDateString = "04/05/2018";
+            var expectedDateParsed = DateTime.Parse(expectedDateString).ToString("dd-MM-yyyy HH:mm:ss");
 
-With the Provider API running open another command line instance and navigate to:
+            // Arrange
+            _mockProviderService.Given("There is data")
+                                .UponReceiving("A valid GET request for Date Validation")
+                                .With(new ProviderServiceRequest 
+                                {
+                                    Method = HttpVerb.Get,
+                                    Path = "/api/provider",
+                                    Query = $"validDateTime={expectedDateString}"
+                                })
+                                .WillRespondWith(new ProviderServiceResponse {
+                                    Status = 200,
+                                    Headers = new Dictionary<string, object>
+                                    {
+                                        { "Content-Type", "application/json; charset=utf-8" }
+                                    },
+                                    Body = new 
+                                    {
+                                        test = "NO",
+                                        validDateTime = expectedDateParsed
+                                    }
+                                });
 
-```
-[RepositoryRoot]/Consumer/src/
-```
+            // Act
+            var result = ConsumerApiClient.ValidateDateTimeUsingProviderApi(expectedDateString, _mockProviderServiceBaseUri).GetAwaiter().GetResult();
+            var resultBody = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
-Once in the directory run another ```dotnet restore``` to pull down the dependencies for the Consumer project. Once this is completed at the command line
-type in ```dotnet run``` you should see output:
+            // Assert
+            Assert.Contains(expectedDateParsed, resultBody);
+        }
+    }
 
-```
-MyPc:src >$ dotnet run
--------------------
-Running consumer with args: dateTimeToValidate = 05/01/2018, baseUri = http://localhost:9000
-To use with your own parameters:
-Usage: dotnet run [DateTime To Validate] [Provider Api Uri]
-Usage Example: dotnet run 01/01/2018 http://localhost:9000
--------------------
-Validating date...
-{"test":"NO","validDateTime":"05-01-2018 00:00:00"}
-...Date validation complete. Goodbye.
-```
+````
 
-If you see output similar to above in your command line then the consumer is now running successfully! If you want to now you can experiment with passing in
-parameters different to the defaults.
+For this first Pact test, we just look that he parse correctly the dates
 
-We are now ready to start the testing with Pact
+Notice on the **Arrange** part we explain the request and the answer expected
 
-Run ```git checkout step1``` and follow the instructions in this readme file
+You can now launch your pact test as follow: ```` dotnet test ````
 
+You should get the following results:
+
+````
+Starting test execution, please wait...
+
+A total of 1 test files matched the specified pattern.
+INFO  WEBrick 1.3.1
+INFO  ruby 2.2.2 (2015-04-13) [x86_64-darwin13]
+INFO  WEBrick::HTTPServer#start: pid=23138 port=9222
+                                                                                                                                   
+Test Run Successful.
+Total tests: 2
+     Passed: 2
+Total time: 7.7799 Seconds
+
+````
+ If you look on the root folder /pacts you will found the following json file:
+ 
+````
+{
+  "consumer": {
+    "name": "Consumer"
+  },
+  "provider": {
+    "name": "Provider"
+  },
+  "interactions": [
+    {
+      "description": "A valid GET request for Date Validation",
+      "providerState": "There is data",
+      "request": {
+        "method": "get",
+        "path": "/api/provider",
+        "query": "validDateTime=04/05/2018"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "test": "NO",
+          "validDateTime": "05-04-2018 00:00:00"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
+````
+This is our contract that specify how we expect the Provider Service API to behave.
+
+Now run ```` git checkout step2 ```` to go to the next step
