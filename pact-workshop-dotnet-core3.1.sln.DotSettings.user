@@ -1,0 +1,11 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=573541a3_002D1bfd_002D44e5_002Db905_002D6715c38d5862/@EntryIndexedValue">&lt;SessionState ContinuousTestingIsOn="False" ContinuousTestingMode="0" FrameworkVersion="{x:Null}" IsLocked="False" Name="ProviderApiTests" PlatformMonoPreference="{x:Null}" PlatformType="{x:Null}" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"&gt;
+  &lt;Or&gt;
+    &lt;TestAncestor&gt;
+      &lt;TestId&gt;xUnit::5B0F4F5E-3904-4F01-9924-A94C39AE9A5E::.NETCoreApp,Version=v2.0::tests.ProviderApiTests&lt;/TestId&gt;
+    &lt;/TestAncestor&gt;
+    &lt;TestAncestor&gt;
+      &lt;TestId&gt;xUnit::CE55E618-08C7-4894-A8C3-982C2B8F6344::.NETCoreApp,Version=v2.0::tests.ConsumerPactTests&lt;/TestId&gt;
+    &lt;/TestAncestor&gt;
+  &lt;/Or&gt;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

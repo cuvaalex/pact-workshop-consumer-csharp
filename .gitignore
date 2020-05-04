@@ -1,0 +1,9 @@
+/.idea/
+/Consumer/src/bin/Debug/netcoreapp2.0/
+/Consumer/src/obj/
+/Consumer/tests/bin/Debug/netcoreapp2.0/
+/Consumer/tests/obj/
+/Provider/src/bin/Debug/netcoreapp2.0/
+/Provider/src/obj/
+/Provider/tests/bin/Debug/netcoreapp2.0/
+/Provider/tests/obj/
