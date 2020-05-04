@@ -51,10 +51,11 @@ namespace Provider.Controllers
 
         private bool DataMissing()
         {
-            string path = Path.Combine(Directory.GetCurrentDirectory(), @"../../data");
-            string pathWithFile = Path.Combine(path, "somedata.txt");
+            //string path = Path.Combine(Directory.GetCurrentDirectory(), @"../../data");
+            //string pathWithFile = Path.Combine(path, "somedata.txt");
 
-            return !System.IO.File.Exists(pathWithFile);
+            //return !System.IO.File.Exists(pathWithFile);
+            return true;
         }
     }
 }
