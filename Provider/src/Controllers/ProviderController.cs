@@ -1,21 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Provider.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
-    public class ProviderController : Controller
+    public class ProviderController : ControllerBase
     {
-        private IConfiguration _Configuration { get; }
 
-        public ProviderController(IConfiguration configuration)
+        private readonly ILogger<ProviderController> _logger;
+        
+        public ProviderController(ILogger<ProviderController> logger)
         {
-            this._Configuration = configuration;
+            _logger = logger;
         }
 
         // GET api/provider?validDateTime=[DateTime String]
@@ -38,7 +36,7 @@ namespace Provider.Controllers
             {
                 parsedDateTime = DateTime.Parse(validDateTime);
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 return BadRequest(new { message = "validDateTime is not a date or time" });
             }
@@ -55,7 +53,7 @@ namespace Provider.Controllers
             //string pathWithFile = Path.Combine(path, "somedata.txt");
 
             //return !System.IO.File.Exists(pathWithFile);
-            return true;
+            return false;
         }
     }
 }
