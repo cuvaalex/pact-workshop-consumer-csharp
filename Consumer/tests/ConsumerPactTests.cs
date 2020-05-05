@@ -20,39 +20,36 @@ namespace consumer.tests
         }
         
         [Fact]
-        public void ItParsesADateCorrectly()
+        public void ItHandlesInvalidDateParam()
         {
-            var expectedDateString = "04/05/2018";
-            var expectedDateParsed = DateTime.Parse(expectedDateString).ToString("dd-MM-yyyy HH:mm:ss");
-
-            // Arrange
+            // Arange
+            var invalidRequestMessage = "validDateTime is not a date or time";
             _mockProviderService.Given("There is data")
-                                .UponReceiving("A valid GET request for Date Validation")
-                                .With(new ProviderServiceRequest 
-                                {
-                                    Method = HttpVerb.Get,
-                                    Path = "/api/provider",
-                                    Query = $"validDateTime={expectedDateString}"
-                                })
-                                .WillRespondWith(new ProviderServiceResponse {
-                                    Status = 200,
-                                    Headers = new Dictionary<string, object>
-                                    {
-                                        { "Content-Type", "application/json; charset=utf-8" }
-                                    },
-                                    Body = new 
-                                    {
-                                        test = "NO",
-                                        validDateTime = expectedDateParsed
-                                    }
-                                });
+                .UponReceiving("A invalid GET request for Date Validation with invalid date parameter")
+                .With(new ProviderServiceRequest 
+                {
+                    Method = HttpVerb.Get,
+                    Path = "/api/provider",
+                    Query = "validDateTime=lolz"
+                })
+                .WillRespondWith(new ProviderServiceResponse {
+                    Status = 400,
+                    Headers = new Dictionary<string, object>
+                    {
+                        { "Content-Type", "application/json; charset=utf-8" }
+                    },
+                    Body = new 
+                    {
+                        message = invalidRequestMessage
+                    }
+                });
 
             // Act
-            var result = ConsumerApiClient.ValidateDateTimeUsingProviderApi(expectedDateString, _mockProviderServiceBaseUri).GetAwaiter().GetResult();
-            var resultBody = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var result = ConsumerApiClient.ValidateDateTimeUsingProviderApi("lolz", _mockProviderServiceBaseUri).GetAwaiter().GetResult();
+            var resultBodyText = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
             // Assert
-            Assert.Contains(expectedDateParsed, (string) resultBody);
+            Assert.Contains(invalidRequestMessage, resultBodyText);
         }
     }
 }
