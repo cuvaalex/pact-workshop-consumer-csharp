@@ -15,15 +15,47 @@ We will explore Option 3, and we will implement a Contract test using [PactNet](
 
 For this first step, we move to the ```Consumer/tests``` folder and we launch the following on the command line:
 
+Pact cannot execute tests on its own it needs a test runner project. For this workshop, we will be using [XUnit](https://xunit.github.io/) to create the project
+navigate to ```[RepositoryRoot]/YourSolution/Consumer/tests``` and run:
+
+```
+dotnet new xunit
+```
+
+This will create an empty XUnit project with all the references you need... expect Pact. Depending on what OS you are completing this workshop on you will need
+to run one of the following commands:
+
+```
+# Windows
+dotnet add package PactNet.Windows
+
+# OSX
+dotnet add package PactNet.OSX
+
+# Linux
+dotnet add package PactNet.Linux.x64
+# Or...
+dotnet add package PactNet.Linux.x86
+```
+
+Finally you will need to add a reference to the Consumer Client project src code. So again at the same command line type and run the command:
+
+```
+dotnet add reference ../src/consumer.csproj
+```
+
+This will allow you to access public code from the Consumer Client project which you will need to do to test the code!
+
+Once this command runs successfully you will have in ```[RepositoryRoot]/Consumer/tests``` an empty .NET Core XUnit Project with Pact and we can begin to setup Pact!
+
+#### NB - Multiple OS Environments
+
+When using Pact tests for your production projects you might want to support multiple OSes. You can with .NET Core specify different packages in your
+**.csproj** file based on the operating system but for the purpose of this workshop this is unnecessary. Other language implementations do not always
+require OS based packages.
+
+We also need to add our new xunit project to our solution
 ````
-> dotnet new xunit
-
-> dotnet add package PactNet.OSX
-> dotnet add package PactNet.Windows
-> dotnet add package PactNet.Linux.x64
-> dotnet restore
-Choose one of the above depends of your OS
-
 > cd ../../
 > dotnet sln add Consumer/tests
 ````
